@@ -1,0 +1,91 @@
+// Inclusão das bibliotecas
+#include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
+
+// Configuração do WiFi
+const char* ssid = "Eventos2023";  // SSID Wifi
+const char* password = "mit@ufersa2023";  // Senha Wifi
+
+// Variáveis de Server e Status do LED
+ESP8266WebServer server(80); //Cria um objeto ESP8266WebServer que escuta na porta 80 (porta padrão para HTTP).
+bool LEDstatus = LOW;
+
+void setup() {
+  // Inicia Serial e LED
+  Serial.begin(115200);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  // Inicia Conexão WiFi
+  WiFi.mode(WIFI_STA); //Configura o ESP8266 como um cliente Wi-Fi (modo estação).
+  WiFi.begin(ssid, password);
+  Serial.println("");
+
+  // Aguarda Conexão e Informa IP
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.print("Rede WiFi: ");
+  Serial.println(ssid);
+  Serial.print("Endereço IP: ");
+  Serial.println(WiFi.localIP());
+  delay(100);
+
+  // Configura Handles do Server e Inicia Server
+  server.on("/", handle_OnConnect); //Configura os manipuladores para diferentes URLs.
+  server.on("/ledoff", handle_ledoff);
+  server.on("/ledon", handle_ledon);
+  server.onNotFound(handle_NotFound);
+  server.begin(); //inicializa o servidor 
+  Serial.println("Servidor HTTP iniciado!");
+
+}
+
+void loop() {
+  server.handleClient();    // Verifica e processa as requisições dos clientes.
+  if (LEDstatus)            // Checa se LED deve acender
+    digitalWrite(LED_BUILTIN, LOW);  // Ligar LED (LOW para acender, pois o LED é invertido)
+  else
+    digitalWrite(LED_BUILTIN, HIGH); // Desligar LED (HIGH para apagar)
+}
+
+// FUNÇÕES HANDLE PARA HTML SERVER
+
+void handle_OnConnect() {
+  server.send(200, "text/html", SendHTML(LEDstatus)); 
+}
+
+void handle_ledon() {
+  LEDstatus = LOW;  // Acende o LED
+  server.send(200, "text/html", SendHTML(LEDstatus));
+}
+
+void handle_ledoff() {
+  LEDstatus = HIGH; // Apaga o LED
+  server.send(200, "text/html", SendHTML(LEDstatus));
+}
+
+void handle_NotFound() {
+  server.send(404, "text/plain", "Not found"); // é enviada para o cliente para indicar que a URL solicitada não foi encontrada no servidor.
+}
+
+String SendHTML(uint8_t led) {
+  String ptr = "<!DOCTYPE html>\n";
+  ptr += "<html>\n";
+  ptr += "<head>\n";
+  ptr += "<title>Controle do LED</title>\n";
+  ptr += "</head>\n";
+  ptr += "<body>\n";
+  ptr += "<h1>LED</h1>\n";
+  ptr += "<p>Clique para Ligar e Desligar o LED.</p>\n";
+  ptr += "<form method=\"get\">\n";
+  if (!led) // Se LEDstatus é LOW, LED está ON
+    ptr += "<input type=\"button\" value=\"LED OFF\" onclick=\"window.location.href='/ledoff'\">\n";
+  else      // Se LEDstatus é HIGH, LED está OFF
+    ptr += "<input type=\"button\" value=\"LED ON\" onclick=\"window.location.href='/ledon'\">\n";
+  ptr += "</form>\n";
+  ptr += "</body>\n";
+  ptr += "</html>\n";
+  return ptr;
+}
