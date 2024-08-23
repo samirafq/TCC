@@ -1,0 +1,53 @@
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+
+WiFiUDP udp;
+const int udpPort = 555; // Porta UDP para comunicação
+const int ledPin = 2;   // Pino GPIO2, que é comum em muitas placas ESP8266
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, HIGH); // Desliga o LED
+  Serial.begin(115200);
+  Serial.println("Iniciando...");
+
+  // Configura o ESP8266MOD como ponto de acesso
+  WiFi.mode(WIFI_AP); //Configura o ESP8266 para funcionar como um ponto de acesso (AP).
+  WiFi.softAP("ESP8266_AP", ""); // Nome da rede e senha
+
+  // Exibe o IP do ponto de acesso
+  IPAddress localIP = WiFi.softAPIP();
+  Serial.print("IP do ponto de acesso: ");
+  Serial.println(localIP);
+  
+  // Inicializa o objeto UDP para escutar na porta definida.
+  if (udp.begin(udpPort)) { 
+    Serial.println("UDP iniciado com sucesso.");
+  } else {
+    Serial.println("Falha ao iniciar UDP.");
+  }
+}
+
+void loop() {
+  listen();
+}
+
+void listen() {
+
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    String req = "";
+    while (udp.available()) { // Lê todos os bytes do pacote UDP e os armazena em uma string.
+      char z = udp.read();
+      req += z;
+    }
+    Serial.print("Recebido: ");
+    Serial.println(req);
+    if(req == "LIGAR\n")
+      digitalWrite(ledPin, LOW); // Liga o LED
+    if(req == "DESLIGAR\n")
+      digitalWrite(ledPin, HIGH); // Liga o LED
+    
+
+  }
+}
