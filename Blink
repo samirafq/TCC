@@ -1,0 +1,14 @@
+void setup() {
+
+  // put your setup code here, to run once:
+  pinMode(LED_BUILTIN, OUTPUT); //porta digital e modo de operação
+   
+}
+void loop() {
+
+  // put your main code here, to run repeatedly:
+  digitalWrite(LED_BUILTIN, LOW); //porta digital e modo de operação
+  delay(1000);
+  digitalWrite(LED_BUILTIN, LOW); //saida de porta e nivel logico
+  delay(1000);
+}
