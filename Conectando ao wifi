@@ -1,0 +1,68 @@
+#include <ESP8266WiFi.h>
+
+#ifndef STASSID
+#define STASSID "Eventos2023"
+#define STAPSK "mit@ufersa2023"
+#endif
+
+// Como é um valor que não pode ser alterado, precisamos criar uma constante do tipo char*
+const char* ssid = STASSID;
+const char* password = STAPSK;
+
+WiFiServer server(80); //padrao HTTP
+
+int cont = 0;
+
+void setup() {
+  Serial.begin(115200);
+  delay(10);
+
+  Serial.print("Conectando: ");
+  // Conectando com a rede
+  Serial.println(ssid);
+
+  // Conectando, traz dois parâmetros, o login e senha 
+  WiFi.begin(ssid, password);
+
+  // Enquanto meu WiFi não estiver conectado, repetir o loop
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500); // Tempo de 500 milissegundos
+  }
+
+  Serial.println("");
+  Serial.print("Conectado à rede: ");
+  Serial.println(ssid);
+
+  // Inicializar o servidor
+  server.begin();
+  Serial.println("Servidor iniciado");
+
+  // Informar qual o IP
+  Serial.print("IP para conectar no ESP: ");
+  Serial.print("http://");
+  Serial.println(WiFi.localIP());
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+
+  Serial.println("Cliente conectado");
+
+  while (!client.available()) {
+    delay(10);
+    
+  }
+  // Ler a requisição do cliente
+  String request = client.readStringUntil('\r');
+  Serial.println(request);
+  client.flush();
+
+  // Enviar uma resposta para o cliente
+  client.println("<html>");
+  client.println("<h1><center>HELLO WORLD</center></h1>");
+  client.println("</html>");
+}
